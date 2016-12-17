@@ -1,0 +1,30 @@
+{
+  "name": "villagegame",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "dependencies": {
+    "express": "^4.14.0",
+    "express-xml-bodyparser": "^0.3.0",
+    "mongoose": "^4.7.3",
+    "request": "^2.79.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cnwangjie/VillageGame.git"
+  },
+  "keywords": [
+    "wechat",
+    "game"
+  ],
+  "author": "cnwangjie",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/cnwangjie/VillageGame/issues"
+  },
+  "homepage": "https://github.com/cnwangjie/VillageGame#readme"
+}
