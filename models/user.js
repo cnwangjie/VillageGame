@@ -1,10 +1,15 @@
 var mongoose = require('mongoose')
 var UserSchema = new mongoose.Schema({
-    id: String,
+    uid: String,
     code: String,
+    nickname: String,
     created_at: {
         type: Date,
         default: Date.now()
+    },
+    exp: {
+        type: Number,
+        default: 0
     },
     people: {
         type: Number,
@@ -26,21 +31,35 @@ var UserSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    entrepot: {
-        type: Number,
-        default: 1
+    building: {
+        granary: {
+            type: Number,
+            default: 1
+        },
+        farm: {
+            type: Number,
+            default: 1
+        },
+        wall: {
+            type: Number,
+            default: 0
+        }
     },
-    farm: {
-        type: Number,
-        default: 1
-    },
-    wall: {
-        type: Number,
+    last_work_at: {
+        type: Date,
         default: 0
+    },
+    invite_id: {
+        type: Number
     }
 })
 
 UserSchema.statics = {
+    listid: (cb) => {
+        return this
+              .find({})
+              .exec(cb)
+    },
     top: (limit, cb) => {
         return this
               .find()
