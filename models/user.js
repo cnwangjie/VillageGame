@@ -49,7 +49,7 @@ var UserSchema = new mongoose.Schema({
         type: Date,
         default: 0
     },
-    invite_id: {
+    inviter_id: {
         type: Number
     }
 })

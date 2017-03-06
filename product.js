@@ -1,7 +1,7 @@
 const User = require('./models/user.js')
 
-const getOutput = (workersum, framlevel) => {
-    return workersum * 10 + framlevel * 3
+const getOutput = (workersum, farmlevel) => {
+    return workersum * 10 + farmlevel * 3
 }
 
 const getLimit = (granarylevel) => {
