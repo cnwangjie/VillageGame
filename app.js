@@ -23,12 +23,13 @@ const product = require('./product.js')
  * 目前每分钟处理一次，数据库并发处理数为1
  */
 schedule.scheduleJob('0 * * * * *', () => {
-    console.log(`start product cron work (${Date.now()})`)
+    let start = new Date
     rds.get('vg-usersum', (err, usersum) => {
         async.timesLimit(+usersum, 1, (n, next) => {
             product(n, next)
         }, (err, n) => {
-
+            let now = new Date
+            console.log(`start product cron work (${now - start}ms | ${start})`)
         })
     })
 })
@@ -58,6 +59,30 @@ const getWallAdd = walllevel => walllevel
 const getAttackObtainGolds = (crops, golds) => (crops / 100 + 0.5 * (Math.random() * 3 + 1) << 0) + (golds / 100 << 0)
 const getAttackObtainMedal = enemyexp => (getLevel(enemyexp) + 0.5 << 0) + (Math.random() + 0.3 << 0)
 const getAttackCost = (crops, walllevel) => (crops / 100 * (Math.random() * 2 + 1) << 0) + walllevel
+const missions = {
+    sum: 3,
+    1: {
+        name: '野狼驱逐⭐',
+        description: '一个遥远地方的村落苦受野狼侵扰，需要救援。他们的牛奶都被偷喝了。他们悬赏2💰希望得到您的援手，你需要派遣1名士兵以拯救他们',
+        cost: 1,
+        obtain: 2,
+        probability: 0.5
+    },
+    2: {
+        name: '保镖护行⭐⭐',
+        description: '一支商队经过了您的村庄。他们向你请求保护，他们需要5名士兵，你可以从中赚取9💰',
+        cost: 5,
+        obtain: 9,
+        probability: 0.7
+    },
+    3: {
+        name: '拯救村落⭐⭐⭐',
+        description: '山贼们袭击了一个村落。他们的村长向您求助，您需要15名士兵来击败那些山贼。事成之后可以获得23💰',
+        cost: 15,
+        obtain: 23,
+        probability: 0.8
+    }
+}
 /*********************************************************************/
 
 
@@ -85,7 +110,7 @@ eventHander.subscribe = (req, res, next) => {
         if (user == null) {
             res.body = {
                 msgType: 'text',
-                content: '欢迎来到村庄游戏，这是微信上的第一款策略游戏。你可以生产粮食🍞，将他们出售💰，进行任务，攻击其他玩家，并且发展你的村庄！\n开始游戏吧！\n发送"开始游戏"可以开始游戏\n发送"帮助"可以查看所有指令',
+                content: '欢迎来到村庄游戏，这是微信上的第一款策略游戏。你可以生产粮食🍞，将他们出售💰，进行任务，攻击其他玩家，并且发展你的村庄！\n开始游戏吧！\n发送"开始游戏"可以开始游戏\n发送"帮助"可以查看所有指令\n游戏目前正在测试，可以随便修改数据，删除数据。有任何问题请联系微信cnWangJie000',
             }
             next()
         } else {
@@ -105,39 +130,95 @@ let textHander = {}
  */
 textHander.texts = {
     '开始游戏': 'startgame',
-    '帮助': 'gethelpmsg',
+    '帮助': {
+        type: 'normal',
+        description: '获取所有指令',
+        name: 'gethelpmsg'
+    },
+    '二维码': {
+        type: 'normal',
+        description: '获得本公众号二维码',
+        name: 'getqrcode'
+    },
+    '消息': {
+        type: 'normal',
+        description: '获得游戏信息',
+        name: 'getgamemsg'
+    },
+    '设置昵称': {
+        type: 'param',
+        paramsum: 1,
+        description: '后面跟一个空格加上你想设置的昵称',
+        name: 'setnickname'
+    },
+    'h': 'gethelpmsg',
     'a': 'startgame',
     'd': 'deleteme',
-    '工作': 'startwork',
+    '工作': {
+        type: 'normal',
+        description: '每次工作可以获得随机粮食',
+        name: 'startwork'
+    },
     'b': 'startwork',
-    '出售粮食': 'sellcrops',
+    '出售粮食': {
+        type: 'normal',
+        description: '出售粮食',
+        name: 'sellcrops'
+    },
     'c': 'sellcrops',
-    '信息': 'getuserdata',
+    '信息': {
+        type: 'normal',
+        description: '查看当前的玩家信息',
+        name: 'getuserdata',
+    },
     'm': 'getuserdata',
     'g': 'getmydata',
-    '招募工人': 'recruitworker',
+    '招募工人': {
+        type: 'normal',
+        description: '招募工人',
+        name: 'recruitworker'
+    },
     'recruitworker': 'recruitworker',
     'set': {
+        group: 'admin',
         type: 'param',
         paramsum: 2,
         name: '$set'
     },
-    '建筑': 'building',
+    '建筑': {
+        type: 'normal',
+        description: '查看当前的建筑信息',
+        name: 'building'
+    },
     'building': 'building',
     '升级农场': 'updatefarm',
     '升级粮仓': 'updategranary',
     '升级围墙': 'updatewall',
     '招募士兵': 'recruitworker',
-    '任务': 'getmissions',
+    '任务': {
+        type: 'normal',
+        description: '寻找一个任务',
+        name: 'getmissions'
+    },
+    'l': 'getmissions',
     'getmissions': 'getmissions',
     '邀请人': {
         type: 'param',
+        description: '设置邀请人',
         paramsum: 1,
         name: 'beinvitedby'
     },
-    '排行榜': 'getrank',
+    '排行榜': {
+        type: 'normal',
+        description: '查看排行榜',
+        name: 'getrank'
+    },
     'r': 'getrank',
-    '寻找敌人': 'findenemy',
+    '寻找敌人': {
+        type: 'normal',
+        description: '攻击其他玩家，获得荣誉',
+        name: 'findenemy'
+    },
     'f': 'findenemy',
     '进攻': {
         type: 'param',
@@ -145,7 +226,9 @@ textHander.texts = {
         name: 'attack'
     },
     '增援': 'reinforce',
-    '放弃': 'giveup'
+    '放弃': 'giveup',
+    '执行任务': 'executemission',
+    'e': 'executemission'
 }
 
 /**
@@ -163,6 +246,16 @@ textHander.handle = (req, res, next) => {
         let method = textHander.texts[params[0]]
         if (method in textHander) {
             textHander[method](req, res, next)
+        } else if ('type' in method && method.type == 'normal') {
+            if (method.name in textHander) {
+                textHander[method.name](req, res, next)
+            } else {
+                res.body = {
+                    msgType: 'text',
+                    content: '该功能可能尚未完成哦'
+                }
+                next()
+            }
         } else if ('type' in method && method.type == 'param') {
             params.shift()
             if (params.length != method.paramsum) {
@@ -223,7 +316,7 @@ textHander.startgame = (req, res, next) => {
         },
         (usersum, cb) => {
             api.getUser({openid: uid}, (err, wechatuser) => {
-                if (wechatuser == undefined) {
+                if (wechatuser == undefined || !'nickname' in wechatuser) {
                     res.body = {
                         msgType: 'text',
                         content: '现在暂时无法获取你的信息，稍后再试吧',
@@ -257,9 +350,20 @@ textHander.startgame = (req, res, next) => {
  * 返回所有指令信息
  */
 textHander.gethelpmsg = (req, res, next) => {
+    if (!'helpmsg' in textHander || !textHander.helpmsg) {
+        textHander.helpmsg = '帮助\n-------------'
+        for (let m in textHander.texts) {
+            let e = textHander.texts[m]
+            if (typeof e == 'string') {
+
+            } else if ('description' in e) {
+                textHander.helpmsg += `\n${m}: ${e.description}`
+            }
+        }
+    }
     res.body = {
         msgType: 'text',
-        content: JSON.stringify(textHander.texts),
+        content: textHander.helpmsg
     }
     next()
 }
@@ -350,6 +454,19 @@ textHander.$set = (req, res, next, params) => {
 }
 
 /**
+ * 消息
+ */
+textHander.getgamemsg = (req, res, next) => {
+    rds.get('vg-usersum', (err, usersum) => {
+        res.body = {
+            msgType: 'text',
+            content: `目前有${usersum}名玩家\n\n有任何问题请联系微信cnWangJie000或QQ924897716，当前数据和游戏平衡性还尚未测试，欢迎各种提意见。可惜个人号没有客服消息和自定义菜单权限，导致游戏比较麻烦，请见谅。`
+        }
+        next()
+    })
+}
+
+/**
  * 获取用户信息，当前模板大致如下
  *
  * XXXXX 的村庄
@@ -397,7 +514,7 @@ textHander.sellcrops = (req, res, next) => {
             next()
         } else {
             let aftergolds = user.golds + user.crops
-            User.update({uid: uid}, {'$set': {crops: 0, golds: aftergolds}}, (err) => {
+            User.update({uid: uid}, {'$set': {exp: user.exp + user.crops, crops: 0, golds: aftergolds}}, (err) => {
                 res.body = {
                     msgType: 'text',
                     content: `卖出了${user.crops}粮食，现在有${aftergolds}金钱`
@@ -626,7 +743,7 @@ textHander.findenemy = (req, res, next) => {
             }
             next()
         } else {
-            User.explike(user.exp, 10000, (err, enemys) => {
+            User.explike(uid, user.exp, 10000, (err, enemys) => {
                 if (enemys.length == 0) {
                     User.update({uid: uid}, {'$set': {golds: user.golds - 1, enemys: null}})
                     res.body = {
@@ -697,7 +814,7 @@ textHander.attack = (req, res, next, params) => {
                     next()
                 } else {
                     if (Math.random() > 0.3) {
-                        User.update({uid: uid}, {'$set': {golds: user.golds - b.cost + b.obtaingolds, medal: user.medal + b.obtainmedal, attack: {status: 'end', enemys: ''}}}, (err) => {
+                        User.update({uid: uid}, {'$set': {exp: user.exp + obtainmedal * 100, golds: user.golds - b.cost + b.obtaingolds, medal: user.medal + b.obtainmedal, attack: {status: 'end', enemys: ''}}}, (err) => {
                             res.body = {
                                 msgType: 'text',
                                 content: `你成功击败了${b.nickname}，获得了${b.obtaingolds}💰和${b.obtainmedal}🎖`
@@ -763,7 +880,145 @@ textHander.reinforce = (req, res, next) => {
  * 获取任务。。。这是个坑，可以完全照搬进攻，也可以重做
  */
 textHander.getmissions = (req, res, next) => {
-    next()
+    let uid = req.body.uid
+    User.findOne({uid: uid}, (err, user) => {
+        if (user == null) {
+            res.body = {
+                msgType: 'text',
+                content: '请先发送"开始游戏"'
+            }
+            next()
+        } else {
+            let missionid = Math.random() * missions.sum + 1 << 0
+            console.log(missionid)
+            let missiondetail = {
+                cost: missions[missionid].cost,
+                obtain: missions[missionid].obtain,
+                probability: missions[missionid].probability
+            }
+            User.update({uid: uid}, {'$set': {mission: {status: 'fond', detail: JSON.stringify(missiondetail), last_exec_at: user.mission.last_exec_at}}}, (err) => {
+                res.body = {
+                    msgType: 'text',
+                    content: '你找到了一个任务，发送"执行任务"即可执行\n\n' + missions[missionid].description
+                }
+                next()
+            })
+        }
+    })
+}
+
+/**
+ * 执行任务，基本上和攻击差不多，但是很蛋疼，不怎么好玩，待重构
+ */
+textHander.executemission = (req, res, next) => {
+    let uid = req.body.uid
+    let time = Date.now()
+    User.findOne({uid: uid}, (err, user) => {
+        if (user == null) {
+            res.body = {
+                msgType: 'text',
+                content: '请先发送"开始游戏"'
+            }
+            next()
+        } else if (user.mission.status != 'fond') {
+            res.body = {
+                msgType: 'text',
+                content: '你现在还没有任务哦'
+            }
+            next()
+        } else if (time - user.mission.last_exec_at < 45 * 1000) {
+            res.body = {
+                msgType: 'text',
+                content: '你不久之前才执行过任务哦，歇一会吧'
+            }
+            next()
+        } else {
+            let m = JSON.parse(user.mission.detail)
+            if (user.golds < m.cost) {
+                res.body = {
+                    msgType: 'text',
+                    content: `执行这个任务需要${m.cost}💰，可你只有${user.golds}💰`
+                }
+                next()
+            } else if (Math.random() > m.probability) {``
+                User.update({uid: uid}, {'$set': {golds: user.golds - m.cost, mission: {status: 'end', detail: null, last_exec_at: time}}}, (err) => {
+                    res.body = {
+                        msgType: 'text',
+                        content: `_(´ཀ\`」 ∠)_, 任务失败了，白花${m.cost}💰`
+                    }
+                    next()
+                })
+            } else {
+                User.update({uid: uid}, {'$set': {exp: user.exp + m.obtain * 10, golds: user.golds - m.cost + m.obtain, mission: {status: 'end', detail: null, last_exec_at: time}}}, (err) => {
+                    res.body = {
+                        msgType: 'text',
+                        content: `任务成功，获得了${m.obtain}💰`
+                    }
+                    next()
+                })
+            }
+        }
+    })
+}
+
+/**
+ * 获取排名
+ */
+textHander.getrank = (req, res, next) => {
+    let uid = req.body.uid
+    User.findOne({uid: uid}, (err, user) => {
+        if (user == null) {
+            res.body = {
+                msgType: 'text',
+                content: '请先发送"开始游戏"'
+            }
+            next()
+        } else {
+            User.alltop(10, (err, alltop) => {
+                User.lvtop(getLevel(user.exp), 5, (err, lvtop) => {
+                    let msgtemp = `全服前 10 :`
+                    for (let p of alltop) {
+                        msgtemp += `\n${p.nickname} lv.${getLevel(p.exp)} 🎖${p.medal}`
+                    }
+                    msgtemp += `\n------------\n${getLevel(user.exp)}级前 5 :\n`
+                    for (let p of alltop) {
+                        msgtemp += `\n${p.nickname} 🎖${p.medal}`
+                    }
+                    msgtemp += `\n------------\n${user.nickname} 🎖${user.medal}\n`
+                    res.body = {
+                        msgType: 'text',
+                        content: msgtemp
+                    }
+                    next()
+                })
+            })
+        }
+    })
+}
+
+/**
+ * 设置昵称
+ */
+textHander.setnickname = (req, res, next, params) => {
+    let uid = req.body.uid
+    let nickname = params[0]
+    User.findOne({uid: uid}, (err, user) => {
+        if (user == null) {
+            res.body = {
+                msgType: 'text',
+                content: '请先发送"开始游戏"'
+            }
+            next()
+        } else {
+            User.update({uid: uid}, {'$set': {nickname: nickname}}, (err) => {
+                res.body = {
+                    msgType: 'text',
+                    content: `成功设置昵称：${nickname}`
+                }
+                next()
+            })
+        }
+    })
 }
 
 const handlerlist = {

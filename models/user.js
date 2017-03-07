@@ -68,25 +68,35 @@ var UserSchema = new mongoose.Schema({
             type: String,
             default: 'end'
         },
-        list: {
+        detail: {
             type: String,
-            default: ''
+            default: null
+        },
+        last_exec_at: {
+            type: Date,
+            default: 0
         }
     }
 })
 
 UserSchema.statics = {
-    top: (limit, cb) => {
+    alltop: function(limit, cb) {
         return this
               .find()
               .sort({medal: 1})
               .limit(limit)
               .exec(cb)
     },
-    explike: function(exp, range, cb) {
-      console.log(this)
+    lvtop: function(lv, limit, cb) {
         return this
-              .find({exp: {'$gt': exp - range, '$lt': exp + range, '$ne': exp}})
+              .find({exp: {'$gt': lv * 10000, '$lt': (lv + 1) * 10000}})
+              .sort({medal: 1})
+              .limit(limit)
+              .exec(cb)
+    },
+    explike: function(uid, exp, range, cb) {
+        return this
+              .find({exp: {'$gt': exp - range, '$lt': exp + range}, uid: {'$ne': uid}})
               .sort({exp: 1})
               .limit(3)
               .exec(cb)
