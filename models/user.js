@@ -1,7 +1,7 @@
 var mongoose = require('mongoose')
 var UserSchema = new mongoose.Schema({
     uid: String,
-    code: String,
+    code: Number,
     nickname: String,
     created_at: {
         type: Date,
@@ -50,21 +50,45 @@ var UserSchema = new mongoose.Schema({
         default: 0
     },
     inviter_id: {
-        type: Number
+        type: Number,
+        default: null
+    },
+    attack: {
+        status: {
+            type: String,
+            default: 'end'
+        },
+        enemys: {
+            type: String,
+            default: ''
+        }
+    },
+    mission: {
+        status: {
+            type: String,
+            default: 'end'
+        },
+        list: {
+            type: String,
+            default: ''
+        }
     }
 })
 
 UserSchema.statics = {
-    listid: (cb) => {
-        return this
-              .find({})
-              .exec(cb)
-    },
     top: (limit, cb) => {
         return this
               .find()
               .sort({medal: 1})
               .limit(limit)
+              .exec(cb)
+    },
+    explike: function(exp, range, cb) {
+      console.log(this)
+        return this
+              .find({exp: {'$gt': exp - range, '$lt': exp + range, '$ne': exp}})
+              .sort({exp: 1})
+              .limit(3)
               .exec(cb)
     }
 }
