@@ -765,12 +765,13 @@ textHander.findenemy = (req, res, next) => {
                         handledenemys[a.code] = tmp
                         msgtemp += `\n\n${tmp.nickname} 的村庄\n--------------\n可获得${tmp.obtaingolds}💰，${tmp.obtainmedal}🎖\n需要花费${tmp.cost}💰雇佣士兵\n发送"进攻 ${tmp.code}"发起进攻`
                     }
-                    User.update({uid: uid}, {'$set': {golds: user.golds - 1, attack: {status: 'fond', enemys: JSON.stringify(handledenemys)}}})
-                    res.body = {
-                        msgType: 'text',
-                        content: msgtemp
-                    }
-                    next()
+                    User.update({uid: uid}, {'$set': {golds: user.golds - 1, attack: {status: 'fond', enemys: JSON.stringify(handledenemys)}}}, (err) => {
+                        res.body = {
+                            msgType: 'text',
+                            content: msgtemp
+                        }
+                        next()
+                    })
                 }
             })
         }
@@ -813,8 +814,8 @@ textHander.attack = (req, res, next, params) => {
                     }
                     next()
                 } else {
-                    if (Math.random() > 0.3) {
-                        User.update({uid: uid}, {'$set': {exp: user.exp + obtainmedal * 100, golds: user.golds - b.cost + b.obtaingolds, medal: user.medal + b.obtainmedal, attack: {status: 'end', enemys: ''}}}, (err) => {
+                    if (Math.random() > 0.4) {
+                        User.update({uid: uid}, {'$set': {exp: user.exp + b.obtainmedal * 100, golds: user.golds - b.cost + b.obtaingolds, medal: user.medal + b.obtainmedal, attack: {status: 'end', enemys: ''}}}, (err) => {
                             res.body = {
                                 msgType: 'text',
                                 content: `你成功击败了${b.nickname}，获得了${b.obtaingolds}💰和${b.obtainmedal}🎖`
